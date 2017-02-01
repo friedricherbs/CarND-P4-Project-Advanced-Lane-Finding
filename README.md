@@ -16,8 +16,8 @@ The goals / steps of this project are the following:
 [//]: # (Image References)
 
 [image1]: undist.png "Undistorted"
-[image2]: ./test_images/test1.jpg "Road Transformed"
-[image3]: ./examples/binary_combo_example.jpg "Binary Example"
+[image2]: undist_scene.png "Undistorted Example"
+[image3]: thresholds.png "Thresholding Example"
 [image4]: ./examples/warped_straight_lines.jpg "Warp Example"
 [image5]: ./examples/color_fit_lines.jpg "Fit Visual"
 [image6]: ./examples/example_output.jpg "Output"
@@ -40,11 +40,12 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 
 ###Pipeline (single images)
 
-####1. Provide an example of a distortion-corrected image.
-To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
+The first step in the pipeline in [lane_detection.py](https://github.com/friedricherbs/CarND-P4-Project-Advanced-Lane-Finding/blob/master/lane_detection.py) in line 278 is to use the calibration and distortion coefficients found in the calibration phase to undistort the original image. Therefore again the OpenCV function cv2.undistort() is used. An example image is shown here:
+
 ![alt text][image2]
-####2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
-I used a combination of color and gradient thresholds to generate a binary image (thresholding steps at lines # through # in `another_file.py`).  Here's an example of my output for this step.  (note: this is not actually from one of the test images)
+
+The differences are particularly visible at the image borders due to radial distortion.
+As next step, I used a combination of color and gradient thresholds to generate a binary image (thresholding steps at lines 28 and 32 in [threshold.py](https://github.com/friedricherbs/CarND-P4-Project-Advanced-Lane-Finding/blob/master/threshold.py)). Before the thresholding, the image is converted to the more illumination invariant S channel of HLS color space for the color thresholding (line 15 and 16) and to grayscale (line 19) before applying a Sobel filter mask (line 22). Here's an example of my output for this step:  
 
 ![alt text][image3]
 

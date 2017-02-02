@@ -18,9 +18,9 @@ The goals / steps of this project are the following:
 [image1]: undist.png "Undistorted"
 [image2]: undist_scene.png "Undistorted Example"
 [image3]: thresholds.png "Thresholding Example"
-[image4]: ./examples/warped_straight_lines.jpg "Warp Example"
-[image5]: ./examples/color_fit_lines.jpg "Fit Visual"
-[image6]: ./examples/example_output.jpg "Output"
+[image4]: warping.png "Warp Example"
+[image5]: hist.png "Histogram example"
+[image6]: lane_fit.png "Histogram Lane detection"
 [video1]: ./project_video.mp4 "Video"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
@@ -40,50 +40,67 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 
 ###Pipeline (single images)
 
+####1. Distortion correction
 The first step in the pipeline in [lane_detection.py](https://github.com/friedricherbs/CarND-P4-Project-Advanced-Lane-Finding/blob/master/lane_detection.py) in line 278 is to use the calibration and distortion coefficients found in the calibration phase to undistort the original image. Therefore again the OpenCV function cv2.undistort() is used. An example image is shown here:
 
 ![alt text][image2]
 
 The differences are particularly visible at the image borders due to radial distortion.
+
+####2. Thresholding
+
 As next step, I used a combination of color and gradient thresholds to generate a binary image (thresholding steps at lines 28 and 32 in [threshold.py](https://github.com/friedricherbs/CarND-P4-Project-Advanced-Lane-Finding/blob/master/threshold.py)). Before the thresholding, the image is converted to the more illumination invariant S channel of HLS color space for the color thresholding (line 15 and 16) and to grayscale (line 19) before applying a Sobel filter mask (line 22). Here's an example of my output for this step:  
 
 ![alt text][image3]
 
-####3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
+####3. Perspective Transform
 
-The code for my perspective transform includes a function called `warper()`, which appears in lines 1 through 8 in the file `example.py` (output_images/examples/example.py) (or, for example, in the 3rd code cell of the IPython notebook).  The `warper()` function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points.  I chose the hardcode the source and destination points in the following manner:
+The code for my perspective transform is implemented in the function `perspective_transform()`, which appears in lines 26 through 48 in the file [lane_detection.py](https://github.com/friedricherbs/CarND-P4-Project-Advanced-Lane-Finding/blob/master/lane_detection.py).  The `perspective_transform()` function takes as inputs an image (`image`) and warps the source points to the destination points to undo the projective transformation in the following manner:
 
 ```
+shape = (image.shape[0], image.shape[1]) 
+x_top_right = int(0.6*shape[1])
+x_top_left  = int(0.4*shape[1])
+y_top       = int(shape[0]/1.5)
 src = np.float32(
-    [[(img_size[0] / 2) - 55, img_size[1] / 2 + 100],
-    [((img_size[0] / 6) - 10), img_size[1]],
-    [(img_size[0] * 5 / 6) + 60, img_size[1]],
-    [(img_size[0] / 2 + 55), img_size[1] / 2 + 100]])
+    [[0,shape[0]],
+    [shape[1],shape[0]],
+    [x_top_right,y_top],
+    [x_top_left,y_top])
+    
+offset = 100 
 dst = np.float32(
-    [[(img_size[0] / 4), 0],
-    [(img_size[0] / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), 0]])
+    [[offset,shape[0]-offset],
+    [shape[1]-offset,shape[0]-offset],
+    [shape[1]-offset,offset],
+    [offset,offset])
 
 ```
 This resulted in the following source and destination points:
 
 | Source        | Destination   | 
 |:-------------:|:-------------:| 
-| 585, 460      | 320, 0        | 
-| 203, 720      | 320, 720      |
-| 1127, 720     | 960, 720      |
-| 695, 460      | 960, 0        |
+| 0, 720        | 100, 620      | 
+| 1280, 720     | 1180, 620     |
+| 768, 480      | 1180, 100     |
+| 512, 480      | 100, 100      |
 
-I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
+I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image:
 
 ![alt text][image4]
 
-####4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
+####4. Lane finding and fitting
 
-Then I did some other stuff and fit my lane lines with a 2nd order polynomial kinda like this:
+Basically two approaches for lane detection exist: the first approach implemented in `find_lanes_histogram()` detects the lane from scratch using a histogram approach. The idea for this approach is that after applying calibration, thresholding, and a perspective transform to a road image, the resulting binary image should have clearly outstanding lane markings. Taking a histogram along all the columns of the lower half of the image (see line 71 of [lane_detection.py](https://github.com/friedricherbs/CarND-P4-Project-Advanced-Lane-Finding/blob/master/lane_detection.py) then yields
 
 ![alt text][image5]
+
+The peaks of the histogram (line 72 and 73) then serve as a starting point for a sliding window search implemented in the function `detect_from_scratch.py` starting in line 107 in the file [line.py](https://github.com/friedricherbs/CarND-P4-Project-Advanced-Lane-Finding/blob/master/line.py). Basically this function follows the lines up to the top of the frame.
+
+![alt text][image6]
+
+The thresholded input image `warped` is divided into 10 horizontal bands (see green boxes in the figure) and a window around the initial lane position is placed (see line 133). In the case that there are sufficiently many non-zero points inside this window (line 140), the mean position of the points then updates the lane position estimate for this image band (line 141). All non-zero pixels inside the sliding windows are included in the lane pixels called `allx` and `ally`, see line 155 and 156. The pixel coordinates of these lane pixels are refined subsequently in the method `update_params()` in line 72 in  [line.py](https://github.com/friedricherbs/CarND-P4-Project-Advanced-Lane-Finding/blob/master/line.py) by fitting a second order polynomial to the points to find the lane parameters. The fit is performed once for world coordinates (line 82) and once for image coordinates (line 87). A robust fitting scheme with different weights depending on the residual was applied (see weight definition in line 81 and 86).
+The second approach uses the filtered values as a starting point for the lane search. 
 
 ####5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 

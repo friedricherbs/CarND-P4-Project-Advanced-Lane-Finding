@@ -87,7 +87,7 @@ class Line():
         self.image_fit = np.polyfit(y_val, x_val, 2, w=weights)
         
         assert(abs(new_fit[0]) > 0)
-        self.radius_of_curvature = ((1 + (2*new_fit[0]*y_eval + new_fit[1])**2)**1.5) \
+        self.radius_of_curvature = ((1 + (2*new_fit[0]*y_eval*ym_per_pix  + new_fit[1])**2)**1.5) \
                                    /np.absolute(2*new_fit[0])
                                   
         if self.detected:
@@ -101,7 +101,7 @@ class Line():
             
         self.current_fit = new_fit
             
-        x_eval = new_fit[0]*y_eval**2 + new_fit[1]*y_eval + new_fit[2]
+        x_eval = new_image_fit[0]*y_eval***2 + new_image_fit[1]*y_eval + new_image_fit[2]
         self.line_base_pos = abs(640 - x_eval)*xm_per_pix
         
     def detect_from_scratch(self, warped, lane_idx):

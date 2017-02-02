@@ -21,6 +21,7 @@ The goals / steps of this project are the following:
 [image4]: warping.png "Warp Example"
 [image5]: hist.png "Histogram example"
 [image6]: lane_fit.png "Histogram Lane detection"
+[image7]: lane_filter.png "Filter Lane detection"
 [video1]: ./project_video.mp4 "Video"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
@@ -100,11 +101,30 @@ The peaks of the histogram (line 72 and 73) then serve as a starting point for a
 ![alt text][image6]
 
 The thresholded input image `warped` is divided into 10 horizontal bands (see green boxes in the figure) and a window around the initial lane position is placed (see line 133). In the case that there are sufficiently many non-zero points inside this window (line 140), the mean position of the points then updates the lane position estimate for this image band (line 141). All non-zero pixels inside the sliding windows are included in the lane pixels called `allx` and `ally`, see line 155 and 156. The pixel coordinates of these lane pixels are refined subsequently in the method `update_params()` in line 72 in  [line.py](https://github.com/friedricherbs/CarND-P4-Project-Advanced-Lane-Finding/blob/master/line.py) by fitting a second order polynomial to the points to find the lane parameters. The fit is performed once for world coordinates (line 82) and once for image coordinates (line 87). A robust fitting scheme with different weights depending on the residual was applied (see weight definition in line 81 and 86).
-The second approach uses the filtered values as a starting point for the lane search. 
 
-####5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
+The second approach uses the filtered values as a starting point for the lane search. In this case just a window around the previous detection is searched. This improves speed and provides a more robust method for rejecting outliers. 
 
-I did this in lines # through # in my code in `my_other_file.py`
+![alt text][image7]
+
+This second approach is implemented in the method `find_lanes_filter()`in line 126 in [lane_detection.py](https://github.com/friedricherbs/CarND-P4-Project-Advanced-Lane-Finding/blob/master/lane_detection.py). This method basically calls the `detect_from_filter()` method implemented in line 160 in [line.py](https://github.com/friedricherbs/CarND-P4-Project-Advanced-Lane-Finding/blob/master/line.py). It searches with a margin of 100 pixels around the previous detection for valid nonzero pixels and again fits a second order polynomial to these lane pixels (see `update_params()` in [line.py](https://github.com/friedricherbs/CarND-P4-Project-Advanced-Lane-Finding/blob/master/line.py)).
+
+####5. Lane curvature and center distance estimation
+
+The curvature radius is estimated in line 90 and 91 of [line.py](https://github.com/friedricherbs/CarND-P4-Project-Advanced-Lane-Finding/blob/master/line.py): 
+
+```
+ym_per_pix = 30/720 # meters per pixel in y dimension
+self.radius_of_curvature = ((1 + (2*new_fit[0]*y_eval*ym_per_pix   + new_fit[1])**2)**1.5) \
+                                   /np.absolute(2*new_fit[0])
+```
+
+and the car to lane distances are calculated in line 104 and 105:
+
+```
+xm_per_pix = 3.7/700 # meters per pixel in x dimension
+x_eval = new_image_fit[0]*y_eval***2 + new_image_fit[1]*y_eval + new_image_fit[2]
+self.line_base_pos = abs(640 - x_eval)*xm_per_pix
+```
 
 ####6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 

@@ -22,7 +22,8 @@ The goals / steps of this project are the following:
 [image5]: hist.png "Histogram example"
 [image6]: lane_fit.png "Histogram Lane detection"
 [image7]: lane_filter.png "Filter Lane detection"
-[video1]: ./project_video.mp4 "Video"
+[image8]: lane_result.png "Lane detection example"
+[video1]: p4.mp4 "Project Video"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
 ###Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
@@ -126,11 +127,37 @@ x_eval = new_image_fit[0]*y_eval***2 + new_image_fit[1]*y_eval + new_image_fit[2
 self.line_base_pos = abs(640 - x_eval)*xm_per_pix
 ```
 
-####6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
+####6. Lane visualization
 
-I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
+I implemented this step in lines 197 through 219 in my code in `lane_detection.py` in the function `get_lanes_current()`:
 
-![alt text][image6]
+```
+# Create an image to draw the lines on
+warp_zero = np.zeros_like(warped).astype(np.uint8)
+color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
+
+yvals  = np.linspace(300,600,301)
+#xvals = np.asarray(left_lane.allx)
+left_fitx = left_lane.image_fit[0]*yvals**2 + left_lane.image_fit[1]*yvals + left_lane.image_fit[2] 
+pts_left = np.array([np.transpose(np.vstack([left_fitx, yvals]))])
+
+right_fitx = right_lane.image_fit[0]*yvals**2 + right_lane.image_fit[1]*yvals + right_lane.image_fit[2] 
+pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, yvals])))])
+
+pts = np.hstack((pts_left, pts_right))
+
+# Draw the lane onto the warped blank image
+cv2.fillPoly(color_warp, np.int_([pts]), (0,255, 0))
+
+# Warp the blank back to original image space using inverse perspective matrix (Minv)
+newwarp = cv2.warpPerspective(color_warp, Minv, (undist.shape[1], undist.shape[0])) 
+# Combine the result with the original image
+result = cv2.addWeighted(undist, 1, newwarp, 0.3, 0)
+```
+
+Here is an example of my result on a test image:
+
+![alt text][image8]
 
 ---
 

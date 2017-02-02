@@ -21,6 +21,7 @@ The goals / steps of this project are the following:
 [image4]: warping.png "Warp Example"
 [image5]: hist.png "Histogram example"
 [image6]: lane_fit.png "Histogram Lane detection"
+[image7]: lane_fit_filter.png "Filter Lane detection"
 [video1]: ./project_video.mp4 "Video"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
@@ -101,6 +102,8 @@ The peaks of the histogram (line 72 and 73) then serve as a starting point for a
 
 The thresholded input image `warped` is divided into 10 horizontal bands (see green boxes in the figure) and a window around the initial lane position is placed (see line 133). In the case that there are sufficiently many non-zero points inside this window (line 140), the mean position of the points then updates the lane position estimate for this image band (line 141). All non-zero pixels inside the sliding windows are included in the lane pixels called `allx` and `ally`, see line 155 and 156. The pixel coordinates of these lane pixels are refined subsequently in the method `update_params()` in line 72 in  [line.py](https://github.com/friedricherbs/CarND-P4-Project-Advanced-Lane-Finding/blob/master/line.py) by fitting a second order polynomial to the points to find the lane parameters. The fit is performed once for world coordinates (line 82) and once for image coordinates (line 87). A robust fitting scheme with different weights depending on the residual was applied (see weight definition in line 81 and 86).
 The second approach uses the filtered values as a starting point for the lane search. 
+
+![alt text][image7]
 
 ####5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 

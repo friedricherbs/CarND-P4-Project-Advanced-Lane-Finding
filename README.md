@@ -169,6 +169,9 @@ Here's a [link to my video result](p4.mp4)
 
 ###Discussion
 
-####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
-
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+This project was fun and clearly was a big improvement in comparison with project 1.  Clearly the transformation to HLS space, the histogram based lane detection approach and the temporal smoothing made the lane detection far more robust than the initial implementation from P1. 
+Personally, I dislike the many tuning parameters of the algorithm. In my opinion it would be much better to learn at least some of them (like Sobel or color thresholds) from annotated data. Also a classifer or even deep learning approach would be conceivable and would avoid manual parameter tuning. 
+The perspective transformation will fail when the road surface is not flat any longer. Besides, as soon as the car is leaving the ego lane and crossing the lines, the approach is likely to fail. Really strong curves as in the harder challenge are furthermore pretty difficult.
+Currently the pipeline performs well on the project video, but completely fails for the other challenge sequences. I am definitely planning to work on these recordings, however at the moment I need to go on to the next project. The main difficulties with the challenge video were false lines and lack of contrast.
+Possible improvements could include the usage of different image preprocessing steps like histogram equalization or gamma correction.
+Furthermore contrast or gradient enhancement techniques or steerable filters for strong curves might yield improvements. Adaptive thresholds like Otsu's method are also attractive. Using optical flow might yield a better lane prediction both for curves and for non-flat roads. 
